@@ -1,0 +1,59 @@
+
+name: PoC — render 3D (three.js + SwiftShader)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Render frames
+        run: node render.js
+        env:
+          FRAMES: '240'
+
+      - name: Encode MP4
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+          ffmpeg -y -framerate 24 -i frames/f_%05d.png -c:v libx264 -pix_fmt yuv420p -crf 20 -movflags +faststart poc_render.mp4
+          ffprobe -v error -show_entries format=duration,size -of default=nw=1 poc_render.mp4
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: poc_render
+          path: poc_render.mp4
+          retention-days: 7
+
+      - name: Upload preview frames
+        uses: actions/upload-artifact@v4
+        with:
+          name: preview_frames
+          path: |
+            frames/f_00000.png
+            frames/f_00060.png
+            frames/f_00130.png
+            frames/f_00200.png
+          retention-days: 7
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "poc-$GITHUB_RUN_NUMBER" poc_render.mp4 --title "PoC render #$GITHUB_RUN_NUMBER" --notes "Render 3D no GitHub Actions"
+

@@ -1,0 +1,14 @@
+{
+  "name": "poc-video-render",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "PoC: render three.js low-poly no GitHub Actions (Chromium headless + SwiftShader + FFmpeg)",
+  "scripts": {
+    "render": "node render.js"
+  },
+  "dependencies": {
+    "puppeteer": "^24.10.0",
+    "three": "^0.180.0"
+  }
+}
